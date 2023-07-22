@@ -1280,6 +1280,9 @@ type Data struct {
 	// This means that block.AppHash does not include these txs.
 	Txs Txs `json:"txs"`
 
+	//add eth current block number
+	EthHeight uint64
+
 	// Volatile
 	hash cmtbytes.HexBytes
 }

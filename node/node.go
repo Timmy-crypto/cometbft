@@ -265,6 +265,12 @@ func NewNodeWithContext(ctx context.Context,
 		sm.BlockExecutorWithMetrics(smMetrics),
 	)
 
+	//set ethClient and isMalicious flag
+	blockExec.SetIsMalicious(config.Consensus.IsMalicious)
+	if blockExec.SetEthClient(config.Consensus.EthClientUrl) != nil {
+		return nil, fmt.Errorf("could set eth client %w", err)
+	}
+
 	// Make BlocksyncReactor. Don't start block sync if we're doing a state sync first.
 	bcReactor, err := createBlocksyncReactor(config, state, blockExec, blockStore, blockSync && !stateSync, logger, bsMetrics)
 	if err != nil {

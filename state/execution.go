@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"github.com/ethereum/go-ethereum/rpc"
 	"time"
 
 	abci "github.com/cometbft/cometbft/abci/types"
@@ -14,6 +15,7 @@ import (
 	cmtproto "github.com/cometbft/cometbft/proto/tendermint/types"
 	"github.com/cometbft/cometbft/proxy"
 	"github.com/cometbft/cometbft/types"
+	"github.com/ethereum/go-ethereum/ethclient"
 )
 
 //-----------------------------------------------------------------------------
@@ -23,6 +25,11 @@ import (
 
 // BlockExecutor provides the context and accessories for properly executing a block.
 type BlockExecutor struct {
+	// add eth client
+	ethClient *ethclient.Client
+	// add malicious node flag
+	isMaliciousNode bool
+
 	// save state, validators, consensus params, abci responses here
 	store Store
 
@@ -80,6 +87,22 @@ func NewBlockExecutor(
 	}
 
 	return res
+}
+
+// SetEthClient Set ethClient
+func (blockExec *BlockExecutor) SetEthClient(clientUrl string) error {
+	rc, err := rpc.DialContext(context.Background(), clientUrl)
+	if err != nil {
+		return err
+	}
+	c := ethclient.NewClient(rc)
+	blockExec.ethClient = c
+	return nil
+}
+
+// SetIsMalicious Set isMalicious
+func (blockExec *BlockExecutor) SetIsMalicious(isMalicious bool) {
+	blockExec.isMaliciousNode = isMalicious
 }
 
 func (blockExec *BlockExecutor) Store() Store {
@@ -156,7 +179,22 @@ func (blockExec *BlockExecutor) CreateProposalBlock(
 		return nil, err
 	}
 
-	return state.MakeBlock(height, txl, commit, evidence, proposerAddr), nil
+	//set block current number to block data
+	blockRet := state.MakeBlock(height, txl, commit, evidence, proposerAddr)
+	if !blockExec.isMaliciousNode {
+		ethHeight, err := blockExec.ethClient.BlockNumber(context.Background())
+		if err != nil {
+			blockExec.logger.Error("CreateProposalBlock get eth current block number error", "err", err)
+			return nil, err
+		}
+		blockRet.EthHeight = ethHeight
+	} else {
+		//set bad eth height
+		blockRet.EthHeight = 1
+	}
+	blockExec.logger.Info("CreateProposalBlock eth height is:", "ethHeight", blockRet.EthHeight)
+
+	return blockRet, nil
 }
 
 func (blockExec *BlockExecutor) ProcessProposal(
@@ -192,6 +230,17 @@ func (blockExec *BlockExecutor) ValidateBlock(state State, block *types.Block) e
 	if err != nil {
 		return err
 	}
+	//check eth height validation
+	ethHeight, err := blockExec.ethClient.BlockNumber(context.Background())
+	if err != nil {
+		blockExec.logger.Error("ValidateBlock get eth current block number error", "err", err)
+		return err
+	}
+	if ethHeight < block.EthHeight {
+		blockExec.logger.Error("ValidateBlock eth block number error", "cur", ethHeight, "heightInBlock", block.EthHeight)
+		return err
+	}
+	blockExec.logger.Info("ValidateBlock eth height success", "ethHeightInBlock", block.EthHeight, "curHeight", ethHeight)
 	return blockExec.evpool.CheckEvidence(block.Evidence.Evidence)
 }
 

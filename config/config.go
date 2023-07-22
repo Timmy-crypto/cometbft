@@ -922,6 +922,11 @@ type ConsensusConfig struct {
 	WalPath string `mapstructure:"wal_file"`
 	walFile string // overrides WalPath if set
 
+	//add eth client url
+	EthClientUrl string `mapstructure:"eth_client_url"`
+	//add isMalicious flag
+	IsMalicious bool `mapstructure:"is_malicious"`
+
 	// How long we wait for a proposal block before prevoting nil
 	TimeoutPropose time.Duration `mapstructure:"timeout_propose"`
 	// How much timeout_propose increases with each round
@@ -971,6 +976,9 @@ func DefaultConsensusConfig() *ConsensusConfig {
 		PeerGossipSleepDuration:     100 * time.Millisecond,
 		PeerQueryMaj23SleepDuration: 2000 * time.Millisecond,
 		DoubleSignCheckHeight:       int64(0),
+		//add default eth_client_url and isMalicious
+		EthClientUrl: "https://mainnet.infura.io/v3/2911fce792134eb4bc60d0ad9ebef44f",
+		IsMalicious:  false,
 	}
 }
 
