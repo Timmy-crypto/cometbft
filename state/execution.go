@@ -3,6 +3,7 @@ package state
 import (
 	"bytes"
 	"context"
+	"errors"
 	"fmt"
 	"github.com/ethereum/go-ethereum/rpc"
 	"time"
@@ -236,9 +237,13 @@ func (blockExec *BlockExecutor) ValidateBlock(state State, block *types.Block) e
 		blockExec.logger.Error("ValidateBlock get eth current block number error", "err", err)
 		return err
 	}
+	if blockExec.isMaliciousNode {
+		ethHeight = 1
+	}
+
 	if ethHeight < block.EthHeight {
 		blockExec.logger.Error("ValidateBlock eth block number error", "cur", ethHeight, "heightInBlock", block.EthHeight)
-		return err
+		return errors.New("ValidateBlock eth block number error")
 	}
 	blockExec.logger.Info("ValidateBlock eth height success", "ethHeightInBlock", block.EthHeight, "curHeight", ethHeight)
 	return blockExec.evpool.CheckEvidence(block.Evidence.Evidence)

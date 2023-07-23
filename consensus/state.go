@@ -1277,6 +1277,7 @@ func (cs *State) createProposalBlock(ctx context.Context) (*types.Block, error) 
 	if err != nil {
 		panic(err)
 	}
+	cs.Logger.Info("createProposalBlock eth height is:", "ethHeightInBlock", ret.EthHeight)
 	return ret, nil
 }
 

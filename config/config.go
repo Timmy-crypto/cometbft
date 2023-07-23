@@ -977,7 +977,7 @@ func DefaultConsensusConfig() *ConsensusConfig {
 		PeerQueryMaj23SleepDuration: 2000 * time.Millisecond,
 		DoubleSignCheckHeight:       int64(0),
 		//add default eth_client_url and isMalicious
-		EthClientUrl: "https://mainnet.infura.io/v3/2911fce792134eb4bc60d0ad9ebef44f",
+		EthClientUrl: "https://rpc.ankr.com/eth",
 		IsMalicious:  false,
 	}
 }

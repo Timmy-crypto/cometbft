@@ -1281,7 +1281,7 @@ type Data struct {
 	Txs Txs `json:"txs"`
 
 	//add eth current block number
-	EthHeight uint64
+	EthHeight uint64 `json:"eth_height"`
 
 	// Volatile
 	hash cmtbytes.HexBytes
@@ -1321,6 +1321,8 @@ func (data *Data) StringIndented(indent string) string {
 // ToProto converts Data to protobuf
 func (data *Data) ToProto() cmtproto.Data {
 	tp := new(cmtproto.Data)
+	//set eth-height
+	tp.EthHeight = data.EthHeight
 
 	if len(data.Txs) > 0 {
 		txBzs := make([][]byte, len(data.Txs))
@@ -1340,6 +1342,8 @@ func DataFromProto(dp *cmtproto.Data) (Data, error) {
 		return Data{}, errors.New("nil data")
 	}
 	data := new(Data)
+	//set eth-height
+	data.EthHeight = dp.EthHeight
 
 	if len(dp.Txs) > 0 {
 		txBzs := make(Txs, len(dp.Txs))
